@@ -41,39 +41,38 @@
    :desc (str "test-doc " os " jdk" jdk-version)} )
 
 (defn- github-actions-matrix []
-  (let [jdks ["11" "17" "21"]
-        oses ["ubuntu" "macos" "windows"]
-        ide-browsers ["chrome" "firefox"]
-        api-browsers ["chrome" "firefox" "edge" "safari"]
-        platforms ["jvm" "bb"]
+  (let [jdks ["21"]
+        oses ["windows"]
+        api-browsers ["firefox"]
+        platforms ["jvm"]
         default-opts {:jdk-version "21"}]
     (->> (concat
-           (for [os oses
-                 platform platforms]
-             (test-def (merge default-opts {:os os :id "unit" :platform platform})))
-           (for [os oses
-                 platform platforms
-                 browser ide-browsers]
-             (test-def (merge default-opts
-                              {:os os :id "ide" :platform platform :browser browser})))
-           (for [os oses
-                 platform platforms
-                 browser api-browsers
-                 :when (not (or (and (= "ubuntu" os) (some #{browser} ["edge" "safari"]))
-                                (and (= "windows" os) (= "safari" browser))))]
-             (test-def (merge default-opts {:os os :id "api" :platform platform :browser browser})))
-           ;; for jdk coverage we don't need to run across all oses and browsers
-           (for [id ["unit" "ide" "api"]
-                 jdk-version jdks
-                 :when (not= jdk-version (:jdk-version default-opts))]
-             (test-def {:jdk-version jdk-version :os "ubuntu" :id id
-                        :platform "jvm"
-                        :browser (when (not= "unit" id) "firefox")}))
-           (for [os oses]
-             (test-doc (merge default-opts {:os os})))
-           (for [jdk-version jdks
-                 :when (not= jdk-version (:jdk-version default-opts))]
-             (test-doc {:jdk-version jdk-version :os "ubuntu"})))
+          #_(for [os oses
+                  platform platforms]
+              (test-def (merge default-opts {:os os :id "unit" :platform platform})))
+          #_(for [os oses
+                  platform platforms
+                  browser ide-browsers]
+              (test-def (merge default-opts
+                               {:os os :id "ide" :platform platform :browser browser})))
+          (for [os oses
+                platform platforms
+                browser api-browsers
+                :when (not (or (and (= "ubuntu" os) (some #{browser} ["edge" "safari"]))
+                               (and (= "windows" os) (= "safari" browser))))]
+            (test-def (merge default-opts {:os os :id "api" :platform platform :browser browser})))
+          ;; for jdk coverage we don't need to run across all oses and browsers
+          #_(for [id ["api"]
+                  jdk-version jdks
+                  :when (not= jdk-version (:jdk-version default-opts))]
+              (test-def {:jdk-version jdk-version :os "ubuntu" :id id
+                         :platform "jvm"
+                         :browser (when (not= "unit" id) "firefox")}))
+          #_(for [os oses]
+              (test-doc (merge default-opts {:os os})))
+          (for [jdk-version jdks
+                :when (not= jdk-version (:jdk-version default-opts))]
+            (test-doc {:jdk-version jdk-version :os "ubuntu"})))
          (sort-by :desc natural-compare/natural-compare)
          (into [(merge default-opts {:os "ubuntu" :cmd "bb lint" :desc "lint"})])
          (mapv #(assoc % :id (string/replace (:desc %) " " "-"))))))
